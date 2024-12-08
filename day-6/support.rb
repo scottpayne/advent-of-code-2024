@@ -4,7 +4,20 @@ Position = Data.define(:row, :column) do
   end
 end
 
-Guard = Data.define(:direction, :position)
+Guard = Data.define(:direction, :position) do
+  def next_step
+    position + direction.walk_offset
+  end
+
+  def take_step
+    Guard.new(direction:, position: next_step)
+  end
+
+  def rotate
+    Guard.new(direction: direction.next_direction, position:)
+  end
+end
+
 Obstacle = Data.define(:position)
 
 class Map
@@ -12,29 +25,22 @@ class Map
     @rows = rows
     @columns = columns
     @obstacles = []
-    @obstacles_by_column = {}
-    @obstacles_by_row = {}
     @guard = nil
     @visited_positions = Set.new
+    @potential_obstacles = Set.new
   end
 
   attr_accessor :guard, :obstacles
-  attr_reader :rows, :columns
+  attr_reader :rows, :columns, :potential_obstacles
 
   def add_obstacle(obstacle)
     @obstacles << obstacle
-    @obstacles_by_column[obstacle.position.column] ||= []
-    @obstacles_by_column[obstacle.position.column] << obstacle
-    @obstacles_by_row[obstacle.position.row] ||= []
-    @obstacles_by_row[obstacle.position.row] << obstacle
   end
 
-  def obstacles_by_column(column)
-    @obstacles_by_column[column]
-  end
-
-  def obstacles_by_row(row)
-    @obstacles_by_row[row]
+  def add_potential_obstacle(obstacle)
+    return if !on_map?(obstacle.position)
+    return if @obstacles.include?(obstacle)
+    @potential_obstacles << obstacle
   end
 
   def mark_visited(position)
@@ -55,8 +61,12 @@ class Map
         position = Position.new(row: row, column: column)
         if @visited_positions.include?(position)
           "X"
+        elsif @obstacles.any? { |o| o.position == position } && @potential_obstacles.any? { |o| o.position == position }
+          "o"
         elsif @obstacles.any? { |o| o.position == position }
           "#"
+        elsif @potential_obstacles.any? { |o| o.position == position }
+          "O"
         else
           "."
         end
@@ -128,4 +138,18 @@ def parse_map(input)
     end
   end
   map
+end
+
+def manhattan_distance(position_a, position_b)
+  (position_a.row - position_b.row).abs + (position_a.column - position_b.column).abs
+end
+
+def nearest_position(direction, position, positions)
+  direction.position_finder.call(position, positions).min_by { |p| manhattan_distance(p, position) }
+end
+
+# not efficient but I want to just get it done
+def nearest_obstacle(guard, obstacles)
+  position = nearest_position(guard.direction, guard.position, obstacles.map(&:position))
+  obstacles.find { |o| o.position == position }
 end
