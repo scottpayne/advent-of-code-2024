@@ -1,28 +1,7 @@
 require_relative "support"
 
-test_input = <<~INPUT
-  ....#.....
-  .........#
-  ..........
-  ..#.......
-  .......#..
-  ..........
-  .#..^.....
-  ........#.
-  #.........
-  ......#...
-INPUT
-
 # map = parse_map(test_input.split("\n"))
-map = parse_map(File.read("input.txt").split("\n"))
-
-def manhattan_distance(position_a, position_b)
-  (position_a.row - position_b.row).abs + (position_a.column - position_b.column).abs
-end
-
-def nearest_position(direction, position, positions)
-  direction.position_finder.call(position, positions).min_by { |p| manhattan_distance(p, position) }
-end
+map = parse_map(File.read(ARGV[0]).split("\n"))
 
 # get guards postion
 guard = map.guard

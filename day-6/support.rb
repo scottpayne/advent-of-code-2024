@@ -129,3 +129,11 @@ def parse_map(input)
   end
   map
 end
+
+def manhattan_distance(position_a, position_b)
+  (position_a.row - position_b.row).abs + (position_a.column - position_b.column).abs
+end
+
+def nearest_position(direction, position, positions)
+  direction.position_finder.call(position, positions).min_by { |p| manhattan_distance(p, position) }
+end
