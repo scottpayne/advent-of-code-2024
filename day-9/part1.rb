@@ -1,14 +1,15 @@
 DiskMap = Data.define(:blocks)
 
-FileBlocks = Data.define(:id, :block_count)
-FreeSpace = Data.define(:block_count)
+BlockRun = Data.define(:count, :contents)
+FileBlocks = Data.define(:id)
+FreeSpace = Data.define
 
 def parse(input_line)
   input_line.chars.each_slice(2).flat_map.with_index do |pair, index|
     [
-      FileBlocks.new(id: index, block_count: pair[0]),
-      FreeSpace.new(block_count: pair[1])
-    ]
+      BlockRun.new(count: pair[0], contents: FileBlocks.new(id: index)),
+      BlockRun.new(count: pair[1], contents: FreeSpace.new)
+    ].reject { |block_run| block_run in BlockRun(count: nil) }
   end
 end
 
