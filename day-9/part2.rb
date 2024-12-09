@@ -13,6 +13,14 @@ def enumerate_blocks(input_line)
   end
 end
 
+def file_id_size_map(blocks)
+  blocks.tally.each.with_object({}) do |(block, count), size_map|
+    next unless block.is_a?(FileBlocks)
+    size_map[count] ||= []
+    size_map[count] << block
+  end
+end
+
 def checksum(blocks)
   blocks.map.with_index do |block, idx|
     case block
