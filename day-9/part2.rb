@@ -1,17 +1,8 @@
 DiskMap = Data.define(:blocks)
 
 BlockRun = Data.define(:count, :contents)
-FileBlocks = Data.define(:id)
 FreeSpace = Data.define
 
-def enumerate_blocks(input_line)
-  Enumerator.new do |yielder|
-    input_line.chars.each_slice(2).with_index do |pair, index|
-      pair[0].to_i.times { yielder.yield FileBlocks.new(id: index) }
-      pair[1].to_i.times { yielder.yield FreeSpace.new }
-    end
-  end
-end
 
 def file_id_size_map(blocks)
   blocks.tally.each.with_object({}) do |(block, count), size_map|
@@ -54,17 +45,12 @@ end
 
 input = File.read(ARGV[0]).chomp("\n")
 
-puts checksum(defrag(enumerate_blocks(input)))
+# puts checksum(defrag(enumerate_blocks(input)))
 
 def do_tests
   require "awesome_print"
   require "../tap_assert"
-  checksum_test = ->(values) do
-    values.map.with_index { |value, idx| value * idx }.sum
-  end
 
-  assert(checksum_test[[0, 0, 1, 1]], checksum(defrag(enumerate_blocks("202"))), "no free space")
-  assert(checksum_test[[0, 0, 1, 1, 0, 0]], checksum(defrag(enumerate_blocks("222"))), "defragged, space matches file space")
-  assert(checksum_test[[0, 0, 2, 1, 1, 2]], checksum(defrag(enumerate_blocks("21212"))))
-  assert(checksum_test[[0, 0, 2, 2, 1, 1]], checksum(defrag(enumerate_blocks("23202"))), "defragged, more free space than file contents")
+  assert({2 => [FileBlocks[2], FileBlocks[0]], 3 => [FileBlocks[1]]}, file_id_size_map(enumerate_blocks("20302")))
+  assert({2 => [FileBlocks[2], FileBlocks[0]], 3 => [FileBlocks[1]]}, file_id_size_map(enumerate_blocks("21312")))
 end
