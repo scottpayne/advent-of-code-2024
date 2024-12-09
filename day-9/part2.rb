@@ -18,11 +18,11 @@ def enumerate_blocks(input_line)
 end
 
 def file_id_size_map(blocks)
-  blocks.tally.each.with_object({}) do |(block, count), size_map|
-    next unless block.is_a?(FileBlocks)
-    size_map[count] ||= []
-    size_map[count] << block
-  end
+  blocks
+    .select { |block| block.is_a?(FileBlocks) }
+    .tally
+    .group_by { |k, v| v }
+    .transform_values { |vs| vs.map { |v| v.first }.sort.reverse }
 end
 
 def checksum(blocks)
@@ -67,3 +67,4 @@ def do_tests
   assert({2 => [FileBlocks[2], FileBlocks[0]], 3 => [FileBlocks[1]]}, file_id_size_map(enumerate_blocks("20302")))
   assert({2 => [FileBlocks[2], FileBlocks[0]], 3 => [FileBlocks[1]]}, file_id_size_map(enumerate_blocks("21312")))
 end
+do_tests
