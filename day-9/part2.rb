@@ -1,8 +1,21 @@
 DiskMap = Data.define(:blocks)
 
 BlockRun = Data.define(:count, :contents)
+FileBlocks = Data.define(:id) do
+  def <=>(other)
+    id <=> other.id
+  end
+end
 FreeSpace = Data.define
 
+def enumerate_blocks(input_line)
+  Enumerator.new do |yielder|
+    input_line.chars.each_slice(2).with_index do |pair, index|
+      pair[0].to_i.times { yielder.yield FileBlocks.new(id: index) }
+      pair[1].to_i.times { yielder.yield FreeSpace.new }
+    end
+  end
+end
 
 def file_id_size_map(blocks)
   blocks.tally.each.with_object({}) do |(block, count), size_map|
