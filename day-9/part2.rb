@@ -36,27 +36,32 @@ class FileSizeMap
       blocks
         .select { |block| block in FileBlocks }
         .tally
-        .group_by { |_, v| v }
-        .transform_values { |vs| vs.map(&:first).sort.reverse }
     @deleted = []
+    @replaced = []
   end
 
   def file_sizes
     @map.keys.sort.reverse
   end
 
-  def delete_by_size(size)
-    (@map[size] || []).shift.tap do |deleted|
-      @map.delete(size) if @map.key?(size) && @map[size].empty?
-      @deleted << deleted unless deleted.nil?
+  def first_within_count(count)
+    @map.sort.reverse.detect { |k, v| v <= count } || [nil, 0]
+  end
+
+  def delete(key)
+    if @map.key?(key)
+      @map.delete(key)
+      @deleted << key
     end
   end
 
-  def delete(block)
-    @map.each do |k, v|
-      v.delete(block)
-      @map.delete(k) if @map[k].empty?
-    end
+  def replaced(key)
+    @replaced << key
+    delete(key)
+  end
+
+  def replaced?(key)
+    @replaced.include? key
   end
 
   def deleted?(file_block)
@@ -76,16 +81,13 @@ def checksum(blocks)
 end
 
 def replace_free_space(count, file_size_map, yielder)
-  available_sizes = file_size_map.file_sizes.reject { |size| size > count }
-  if available_sizes.empty?
+  file_block, next_size = file_size_map.first_within_count(count)
+  if file_block.nil?
     count.times { yielder.yield FreeSpace.new }
     return
   end
-
-  next_size = available_sizes.first
-  file_block = file_size_map.delete_by_size(next_size)
   next_size.times { yielder.yield file_block }
-
+  file_size_map.replaced(file_block)
   replace_free_space(count - next_size, file_size_map, yielder)
 end
 
@@ -97,7 +99,7 @@ def defrag(blocks)
       if block.is_a?(FileBlocks)
         replace_free_space(free_count, file_size_map, yielder)
         free_count = 0
-        if file_size_map.deleted?(block)
+        if file_size_map.replaced?(block)
           yielder.yield FreeSpace.new
         else
           file_size_map.delete(block)
@@ -126,7 +128,7 @@ end
 
 def main
   input = File.read(ARGV[0]).chomp("\n")
-  puts defrag(enumerate_blocks(input)).to_a
+  puts checksum(defrag(enumerate_blocks(input)))
 end
 
 main
