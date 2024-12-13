@@ -8,13 +8,13 @@ def parse(input_text)
   end
 end
 
-def neighbours(position)
+def neighbours(position, map)
   [
     Position.new(row: position.row + 1, column: position.column),
     Position.new(row: position.row - 1, column: position.column),
     Position.new(row: position.row, column: position.column + 1),
     Position.new(row: position.row, column: position.column - 1)
-  ].compact
+  ].map { |neighbour| map[neighbour] == map[position] }.compact
 end
 
 def fencing_cost(position, region, map)
