@@ -12,6 +12,7 @@ class GardenMap
   end
 
   def [](row, column)
+    return nil if out_of_bounds?(row, column)
     @map.dig(row, column)
   end
 
@@ -27,10 +28,15 @@ class GardenMap
   end
 
   def neighbours(row, column)
-    [[row + 1, column], [row - 1, column], [row, column + 1], [row, column - 1]].each.with_object([]) do |(r, c), acc|
-      next if r < 0 || c < 0 || r >= @map.size || c >= @map[0].size
+    [[row - 1, column], [row, column + 1], [row + 1, column], [row, column - 1]].each.with_object([]) do |(r, c), acc|
       acc << [r, c, self[r, c]] unless self[r, c].nil?
     end
+  end
+
+  private
+
+  def out_of_bounds?(row, column)
+    row < 0 || column < 0 || row >= @map.size || column >= @map[0].size
   end
 end
 
@@ -56,11 +62,40 @@ def find_region(garden_map, plot, visited)
   end
 end
 
-def find_perimiter(garden_map, region)
-  region_key = region.first.last
-  region.sum do |row, col, _|
-    4 - garden_map.neighbours(row, col).count { |_, _, neighbour_key| neighbour_key == region_key }
+class SidesVisitor
+  SIDES = [
+    TOP = :top,
+    RIGHT = :right,
+    BOTTOM = :bottom,
+    LEFT = :left
+  ].freeze
+  def initialize(garden_map, region)
+    @garden_map = garden_map
+    @region = region
+    @visited = []
   end
+
+  def visit
+    @visited = []
+    region.each do |plot|
+      sides(plot)
+    end
+  end
+
+  private
+
+  def sides(plot)
+    [[-1, 0, TOP], [0, 1, RIGHT], [1, 0, BOTTOM], [0, -1, LEFT]].each.with_object([]) do |(row_offset, col_offset, side), sides|
+      neighbour_coords = [plot[0] + row_offset, plot[1] + col_offset]
+      neighbour = garden_map[*neighbour_coords]
+      if neighbour.nil?
+        sides.push(side)
+      end
+    end
+  end
+
+  attr_reader :garden_map, :region
+  attr_accessor :visited
 end
 
 def main
