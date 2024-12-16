@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# gem "rails"
+gem "dry-monads"
+gem "pry"
+gem "pry-byebug"
+gem "rspec"
