@@ -36,30 +36,36 @@ translated = data.select(
   q_y: find_quadrant(Polars.col("y"), map_height)
 )
 
-# translated.group_by([Polars.col("q_x"), Polars.col("q_y")]).agg(count: Polars.len).collect
-g = translated
-  .drop_nulls
-  .group_by([Polars.col("q_x"), Polars.col("q_y")])
-  .agg(count: Polars.len)
-
-def get_result(df)
-  df.collect[:count].cumprod[-1]
-end
-
-def print_grid(df)
-  (0...map_width).each do |x|
-    (0...map_height).each do |y|
-      if df.filter(Polars.col("x") == x, Polars.col("y") == y).collect[:count].first > 0
-        print "#"
-      else
-        print "."
-      end
+def print_grid(df, map_width:, map_height:)
+  map = (0...map_height).map do |y|
+    (" " * map_width).chars
+  end
+  df
+    .select(Polars.col("x"), Polars.col("y"))
+    .sort([Polars.col("x"), Polars.col("y")])
+    .collect
+    .to_a
+    .uniq
+    .each { |h| map[h["y"]][h["x"]] = "#" }
+  map.each do |row|
+    row.each do |val|
+      print val
     end
     puts
   end
 end
 
-# require "pry"
-# binding.pry
+require "pry"
+binding.pry
 
-puts get_result(g)
+# print_grid(translated, map_width:, map_height:)
+translated.sort([Polars.col("x"), Polars.col("y")]).select(
+  Polars.col("x"),
+  Polars.col("y"),
+  Polars.col("x").diff.alias("diff_x"),
+  Polars.col("y").diff.alias("diff_y")
+).filter((Polars.col("diff_x") == 0) & (Polars.col("diff_y") == 1))
+  .group_by(Polars.col("x"))
+  .agg(Polars.len)
+  .sort(Polars.col("len"))
+  .collect
