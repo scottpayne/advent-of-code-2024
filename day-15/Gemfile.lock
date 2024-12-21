@@ -13,6 +13,9 @@ GEM
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.0, < 2)
       zeitwerk (~> 2.6)
+    immutable-ruby (0.2.0)
+      concurrent-ruby (~> 1.1)
+      sorted_set (~> 1.0)
     logger (1.6.4)
     method_source (1.1.0)
     pry (0.14.2)
@@ -21,6 +24,7 @@ GEM
     pry-byebug (3.10.1)
       byebug (~> 11.0)
       pry (>= 0.13, < 0.15)
+    rbtree (0.4.6)
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -34,6 +38,10 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.2)
+    set (1.1.1)
+    sorted_set (1.0.3)
+      rbtree
+      set (~> 1.0)
     zeitwerk (2.7.1)
 
 PLATFORMS
@@ -42,6 +50,7 @@ PLATFORMS
 
 DEPENDENCIES
   dry-monads
+  immutable-ruby
   pry
   pry-byebug
   rspec
